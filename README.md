@@ -25,13 +25,13 @@ $ tree -a -F --dirsfirst
 │       └── .nopdf
 ├── notes/
 │   └── work-2017-11-09.md
-└── generate_pdfs.sh -> ../generate_pdfs.sh*
+└── md2pdf -> ../md2pdf*
 5 directories, 10 files
 ```
-running `./generate_pdfs.sh` gives:
+running `./md2pdf` gives:
 
 ```sh
-$ ./generate_pdfs.sh
+$ ./md2pdf
 generating ./diary/jan/pdf/04.pdf... done!
 generating ./diary/jan/pdf/01.pdf... done!
 generating ./diary/jan/pdf/07.pdf... done!
@@ -67,6 +67,6 @@ $ tree -a -F --dirsfirst
 │   ├── pdf/
 │   │   └── work-2017-11-09.pdf
 │   └── work-2017-11-09.md
-└── generate_pdfs.sh -> ../generate_pdfs.sh*
+└── md2pdf -> ../md2pdf*
 8 directories, 17 files
 ```
