@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if ! (command -v pandoc >/dev/null 2>&1 && command -v latex >/dev/null 2>&1); then
-	echo "Please install pandoc and texlive" >&2
+if ! (command -v pandoc >/dev/null 2>&1 && command -v xelatex >/dev/null 2>&1); then
+	echo "Please install pandoc and texlive-xetex" >&2
 	exit 1
 fi
 
@@ -20,7 +20,7 @@ for file in $markdown_files; do
 	if [[ "$filetime" -gt "$docutime" ]]; then
 		mkdir -p $(dirname $document)
 		echo -n "generating ${document}..."
-		pandoc -f markdown -t latex -o $document $file || exit
+		pandoc -f markdown -t latex --latex-engine=xelatex -o "$document" "$file" || exit
 		echo " done!"
 	fi
 done

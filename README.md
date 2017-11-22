@@ -1,8 +1,14 @@
-# Generate PDFs from markdown files
+# Generate PDF documents from markdown files
 
+## Introduction
 I use this to generate PDF documents from my markdown files.
 Being a programmer I am quite comfortable writing and reading markdown, but not all people around me are.
-I use this to make stuff better readable for non-programmers
+I use this to make stuff better readable for people who do not want to read markdown.
+
+## Dependencies
+
+- `pandoc`
+- `texlive-xetex`
 
 
 ## Examples
