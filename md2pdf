@@ -8,6 +8,7 @@ fi
 
 watch=false
 debug=false
+verbose=false
 
 for arg in "$@"; do
 	# allow override of output dir from commandline
@@ -21,12 +22,19 @@ for arg in "$@"; do
 		debug=true;
 	fi
 	if [[ "$arg" == "--verbose" || "$arg" == "-v" ]]; then
-		verbose="--verbose"
+		verbose=true
+	fi
+	if [[ "$arg" == "--verbose-pandoc" ]]; then
+		verbose_arg="--verbose"
 	fi
 done
 
 function dbg() {
 	$debug && echo "$@" >&2
+}
+
+function msg() {
+	$verbose && echo "$@"
 }
 
 function get_file_time() {
@@ -37,7 +45,7 @@ function get_file_time() {
 }
 function get_document_time() {
 	document="$1"
-	docutime="$(stat --printf%Y "$document" 2>/dev/null || true)"
+	docutime="$(stat --printf=%Y "$document" 2>/dev/null || true)"
 	dbg "docutime: $docutime"
 	echo "$docutime"
 }
@@ -67,7 +75,7 @@ function get_pdf_dir() {
 function nopdf_exists() {
 	file="$1"
 	if [[ -f "$(dirname "$file")/.nopdf" ]]; then
-		echo "skipping   ${file/#$(pwd)/.}" >&2
+		msg "skipping   ${file/#$(pwd)/.}"
 		return 0
 	fi
 	return 1
@@ -102,9 +110,11 @@ function convert_to_pdf() {
 		if [[ "${filetime}" -gt "${documenttime}" ]]; then
 			# make pdf output directory if it does not exist
 			mkdir -p "$(dirname "$document")"
-			echo -n "generating ${document/#$(pwd)/.}..."
-			pandoc $verbose -f markdown -t latex --latex-engine=xelatex -o "$document" "$file" || return
-			echo " done!"
+			msg -n "generating ${document/#$(pwd)/.}..."
+			pandoc "$verbose_arg" -f markdown -t latex --latex-engine=xelatex -o "$document" "$file" || return
+			msg " done!"
+		else
+			dbg "skipping ${document/#$(pwd)/.} (pdf is newer)"
 		fi
 	done
 
