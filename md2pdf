@@ -19,6 +19,8 @@ for arg in "$@"; do
 	fi
 	if [[ "$arg" == "--debug" || "$arg" == "-d" ]]; then
 		debug=true;
+	fi
+	if [[ "$arg" == "--verbose" || "$arg" == "-v" ]]; then
 		verbose="--verbose"
 	fi
 done
@@ -29,7 +31,7 @@ function dbg() {
 
 function get_file_time() {
 	file="$1"
-	filetime="$(stat --printf=%Y $file)"
+	filetime="$(stat --printf=%Y "$file")"
 	dbg "filetime: $filetime"
 	echo "$filetime"
 }
@@ -42,19 +44,21 @@ function get_document_time() {
 
 function get_pdf_dir() {
 	file="$1"
-	newlocationmarker="$(dirname $file)/.pdfdir"
+	newlocationmarker="$(dirname "$file")/.pdfdir"
+
 	# change output path if a .pdfdir file is found
 	if [[ -f "$newlocationmarker" ]]; then
 		dbg ".pdfdir found"
 		newlocation="$(head -n1 "$newlocationmarker")"
+		dbg "newlocation: $newlocation"
 
 		if [[ "${newlocation}" != /* ]]; then
-			pdfdir="$(realpath -m "$(dirname ${file})/${pdfdir}")"
+			pdfdir="$(realpath -m "$(dirname "${file}")/${newlocation}")"
 		else
 			pdfdir="$newlocation"
 		fi
 	else
-		pdfdir="$(dirname $file)/pdf"
+		pdfdir="$(dirname "$file")/pdf"
 	fi
 	dbg "pdfdir: $pdfdir"
 	echo "$pdfdir"
@@ -62,7 +66,7 @@ function get_pdf_dir() {
 
 function nopdf_exists() {
 	file="$1"
-	if [[ -f "$(dirname $file)/.nopdf" ]]; then
+	if [[ -f "$(dirname "$file")/.nopdf" ]]; then
 		echo "skipping   ${file/#$(pwd)/.}" >&2
 		return 0
 	fi
@@ -97,7 +101,7 @@ function convert_to_pdf() {
 		# only need to genearate if the markdown file is newer than the PDF
 		if [[ "${filetime}" -gt "${documenttime}" ]]; then
 			# make pdf output directory if it does not exist
-			mkdir -p $(dirname $document)
+			mkdir -p "$(dirname "$document")"
 			echo -n "generating ${document/#$(pwd)/.}..."
 			pandoc $verbose -f markdown -t latex --latex-engine=xelatex -o "$document" "$file" || return
 			echo " done!"
@@ -114,4 +118,3 @@ if [[ "${watch:false}" == "true" ]]; then
 else
 	convert_to_pdf "$outputdir" || exit
 fi
-
