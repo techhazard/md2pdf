@@ -1,0 +1,1 @@
+./diary/jan/01.mkd
