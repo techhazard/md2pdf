@@ -111,6 +111,7 @@ function convert_to_pdf() {
 }
 
 if [[ "${watch:false}" == "true" ]]; then
+	set +e
 	while true; do
 		convert_to_pdf "$outputdir"
 		sleep 3
