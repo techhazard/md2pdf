@@ -24,9 +24,6 @@ for arg in "$@"; do
 	if [[ "$arg" == "--verbose" || "$arg" == "-v" ]]; then
 		verbose=true
 	fi
-	if [[ "$arg" == "--verbose-pandoc" ]]; then
-		verbose_arg="--verbose"
-	fi
 done
 
 function dbg() {
@@ -75,7 +72,7 @@ function get_pdf_dir() {
 function nopdf_exists() {
 	file="$1"
 	if [[ -f "$(dirname "$file")/.nopdf" ]]; then
-		msg "skipping   ${file/#$(pwd)/.}"
+		msg "skipping   ${file/#$(pwd)/.} (.nopdf found)"
 		return 0
 	fi
 	return 1
@@ -111,10 +108,10 @@ function convert_to_pdf() {
 			# make pdf output directory if it does not exist
 			mkdir -p "$(dirname "$document")"
 			msg -n "generating ${document/#$(pwd)/.}..."
-			pandoc "$verbose_arg" -f markdown -t latex --latex-engine=xelatex -o "$document" "$file" || return
+			pandoc -f markdown -t latex --latex-engine=xelatex -o "$document" "$file" || return
 			msg " done!"
 		else
-			dbg "skipping ${document/#$(pwd)/.} (pdf is newer)"
+			msg "skipping   ${document/#$(pwd)/.} (pdf is newer)"
 		fi
 	done
 
