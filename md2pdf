@@ -1,27 +1,117 @@
 #!/bin/bash
+set -e
 
 if ! (command -v pandoc >/dev/null 2>&1 && command -v xelatex >/dev/null 2>&1); then
 	echo "Please install pandoc and texlive-xetex" >&2
 	exit 1
 fi
 
-markdown_files=$(find . -iname '*.md' -or -iname '*.mkd' -or -iname '*.markdown')
+watch=false
+debug=false
 
-for file in $markdown_files; do
-	# skip if a .nopdf file is found in the same directory
-	[[ -f "$(dirname $file)/.nopdf" ]] && echo "skipping $file" >&2 && continue
-
-	document="$(dirname ${file})/pdf/$(basename ${file%.*}.pdf)"
-
-	filetime=$(stat --printf=%Y $file)
-	docutime=$(stat --printf=%Y $document 2>/dev/null)
-
-	# only need to genearate if the markdown file is newer than the PDF
-	if [[ "$filetime" -gt "$docutime" ]]; then
-		mkdir -p $(dirname $document)
-		echo -n "generating ${document}..."
-		pandoc -f markdown -t latex --latex-engine=xelatex -o "$document" "$file" || exit
-		echo " done!"
+for arg in "$@"; do
+	# allow override of output dir from commandline
+	if [[ "$arg" == "--output"  || "$arg" == "-o" ]]; then
+		outputdir="$arg"
+	fi
+	if [[ "$arg" == "--watch" || "$arg" == "-w" ]]; then
+		watch=true;
+	fi
+	if [[ "$arg" == "--debug" || "$arg" == "-d" ]]; then
+		debug=true;
+		verbose="--verbose"
 	fi
 done
+
+function dbg() {
+	$debug && echo "$@" >&2
+}
+
+function get_file_time() {
+	file="$1"
+	filetime="$(stat --printf=%Y $file)"
+	dbg "filetime: $filetime"
+	echo "$filetime"
+}
+function get_document_time() {
+	document="$1"
+	docutime="$(stat --printf%Y "$document" 2>/dev/null || true)"
+	dbg "docutime: $docutime"
+	echo "$docutime"
+}
+
+function get_pdf_dir() {
+	file="$1"
+	newlocationmarker="$(dirname $file)/.pdfdir"
+	# change output path if a .pdfdir file is found
+	if [[ -f "$newlocationmarker" ]]; then
+		dbg ".pdfdir found"
+		newlocation="$(head -n1 "$newlocationmarker")"
+
+		if [[ "${newlocation}" != /* ]]; then
+			pdfdir="$(realpath -m "$(dirname ${file})/${pdfdir}")"
+		else
+			pdfdir="$newlocation"
+		fi
+	else
+		pdfdir="$(dirname $file)/pdf"
+	fi
+	dbg "pdfdir: $pdfdir"
+	echo "$pdfdir"
+}
+
+function nopdf_exists() {
+	file="$1"
+	if [[ -f "$(dirname $file)/.nopdf" ]]; then
+		echo "skipping   ${file/#$(pwd)/.}" >&2
+		return 0
+	fi
+	return 1
+}
+
+
+
+function convert_to_pdf() {
+	outputdir="$1"
+	# find all markdown files in the current directory or deeper
+	markdown_files=$(find "$(pwd)" -iname '*.md' -or -iname '*.mkd' -or -iname '*.markdown')
+
+	for file in $markdown_files; do
+
+		dbg "file: $file"
+		# skip if a .nopdf file is found in the same directory
+		nopdf_exists "$file" && continue
+
+		pdfdir="$(get_pdf_dir "$file")"
+
+		dbg -n "document: "
+		document="$(realpath -m "${outputdir:-"${pdfdir}"}/$(basename "${file%.*}.pdf")")"
+		dbg "$document"
+
+		# last edited time of the markdown file
+		filetime="$(get_file_time "$file")"
+
+		# last edited time of the pdf (empty string if it does not exist)
+		documenttime="$(get_document_time "$document")"
+
+		# only need to genearate if the markdown file is newer than the PDF
+		if [[ "${filetime}" -gt "${documenttime}" ]]; then
+			# make pdf output directory if it does not exist
+			mkdir -p $(dirname $document)
+			echo -n "generating ${document/#$(pwd)/.}..."
+			pandoc $verbose -f markdown -t latex --latex-engine=xelatex -o "$document" "$file" || return
+			echo " done!"
+		fi
+	done
+
+}
+
+if [[ "${watch:false}" == "true" ]]; then
+	while true; do
+		convert_to_pdf "$outputdir"
+		sleep 3
+	done
+else
+	convert_to_pdf "$outputdir" || exit
+fi
 
