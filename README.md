@@ -11,6 +11,11 @@ I use this to make stuff better readable for people who do not want to read mark
 - `texlive-xetex`
 
 
+## Arguments
+`--verbose`, `-v`: see what is happening, which files are generated and which ones are skipped
+
+`--watch`, `-w`: "watch" the files (i.e.: run in a loop, and sleep intermittently)
+
 ## Examples
 ### Starting point
 
