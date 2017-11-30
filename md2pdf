@@ -112,7 +112,9 @@ function convert_to_pdf() {
 			# make pdf output directory if it does not exist
 			mkdir -p "$(dirname "$document")"
 			msg -n "generating ${document/#$(pwd)/.}..."
+			$debug && set -x && echo ""
 			pandoc -f markdown -t latex --latex-engine=xelatex -o "$document" "$file" || return
+			$debug && set +x
 			msg " done!"
 		else
 			msg "skipping   ${document/#$(pwd)/.} (pdf is newer)"
