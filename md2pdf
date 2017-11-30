@@ -8,6 +8,7 @@ fi
 
 watch=false
 debug=false
+force=false
 verbose=false
 
 for arg in "$@"; do
@@ -20,6 +21,9 @@ for arg in "$@"; do
 	fi
 	if [[ "$arg" == "--debug" || "$arg" == "-d" ]]; then
 		debug=true;
+	fi
+	if [[ "$arg" == "--force" || "$arg" == "-f" ]]; then
+		force=true
 	fi
 	if [[ "$arg" == "--verbose" || "$arg" == "-v" ]]; then
 		verbose=true
@@ -104,7 +108,7 @@ function convert_to_pdf() {
 		documenttime="$(get_document_time "$document")"
 
 		# only need to genearate if the markdown file is newer than the PDF
-		if [[ "${filetime}" -gt "${documenttime}" ]]; then
+		if [[ "${filetime}" -gt "${documenttime}" || "${force}" == "true" ]]; then
 			# make pdf output directory if it does not exist
 			mkdir -p "$(dirname "$document")"
 			msg -n "generating ${document/#$(pwd)/.}..."
